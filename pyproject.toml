@@ -1,0 +1,112 @@
+[tool.poetry]
+name = "mlops_zoomcamp"
+version = "0.1.0"
+description = "MLOps Zoomcamp course"
+authors = ["Dmitry Zhvansky <placeholder@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "*"
+pandas = "*"
+pyarrow = "*"
+scikit-learn = "*"
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "*"
+ipywidgets = "*"
+matplotlib = "*"
+seaborn = "*"
+tqdm = "*"
+
+[tool.poetry.group.test.dependencies]
+pytest = "*"
+pytest-cov = "*"
+coverage = "*"
+mypy = "*"
+pylint = "*"
+locust = "*"
+memory-profiler = "*"
+
+[tool.poetry.group.format.dependencies]
+black = "*"
+autoflake ="*"
+docformatter ="*"
+isort ="*"
+pyupgrade ="*"
+pybetter ="*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+python_version = "3.10"
+pretty = true
+ignore_missing_imports = true
+namespace_packages = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "pandas", "pytz", "dateutil", "toml",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = [
+    "--cov-report=term-missing",
+    "--cov-report=xml:./coverage.xml",
+    "--cov=./mlops_zoomcamp",
+]
+log_cli = true
+log_cli_level = "DEBUG"
+
+[tool.pylint]
+    [tool.pylint.master]
+    fail-under = 9
+    good-names-rgxs="^[_a-z][_a-z0-9]?$"
+    extension-pkg-whitelist = ["math", "numpy"]
+    disable = [
+      "raw-checker-failed",
+      "bad-inline-option",
+      "locally-disabled",
+      "file-ignored",
+      "suppressed-message",
+      "useless-suppression",
+      "deprecated-pragma",
+      "use-symbolic-message-instead",
+      "too-few-public-methods",
+      "logging-fstring-interpolation",
+      "logging-format-interpolation",
+      'missing-module-docstring',
+      'missing-class-docstring',
+      'missing-function-docstring',
+  ]
+    [tool.pylint."FORMAT"]
+    max-line-length = 120
+
+[tool.black]
+line-length = 120
+target-version = ["py310"]
+include = '\.pyi?$'
+skip-string-normalization = true
+exclude = '''
+(
+  /(
+    | \.git
+    | \.mypy_cache
+  )/
+)
+'''
+
+[tool.isort]
+line_length = 120
+sections = ['FUTURE', 'STDLIB', 'THIRDPARTY', 'FIRSTPARTY', 'LOCALFOLDER']
+no_lines_before = ['STDLIB', 'LOCALFOLDER']
+known_third_party = []
+multi_line_output = 3
+lines_after_imports = 2
+
+[tool.docformatter]
+wrap-summaries=120
+wrap-descriptions=120
