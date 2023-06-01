@@ -6,10 +6,11 @@ authors = ["Dmitry Zhvansky <placeholder@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-numpy = "*"
-pandas = "*"
-pyarrow = "*"
 scikit-learn = "*"
+pandas = "*"
+numpy = "*"
+mlflow = "*"
+optuna = "*"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "*"
@@ -64,6 +65,7 @@ log_cli_level = "DEBUG"
 [tool.pylint]
     [tool.pylint.master]
     fail-under = 9
+    recursive = "y"
     good-names-rgxs="^[_a-z][_a-z0-9]?$"
     extension-pkg-whitelist = ["math", "numpy"]
     disable = [
@@ -100,6 +102,7 @@ exclude = '''
 '''
 
 [tool.isort]
+profile = "black"
 line_length = 120
 sections = ['FUTURE', 'STDLIB', 'THIRDPARTY', 'FIRSTPARTY', 'LOCALFOLDER']
 no_lines_before = ['STDLIB', 'LOCALFOLDER']
