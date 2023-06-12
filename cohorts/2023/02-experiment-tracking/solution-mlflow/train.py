@@ -1,8 +1,8 @@
 import os
 import pickle
+
 import click
 import mlflow
-
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 
@@ -17,11 +17,7 @@ def load_pickle(filename: str):
 
 
 @click.command()
-@click.option(
-    "--data_path",
-    default="./output",
-    help="Location where the processed NYC taxi trip data was saved"
-)
+@click.option("--data_path", default="./output", help="Location where the processed NYC taxi trip data was saved")
 def run_train(data_path: str):
     mlflow.sklearn.autolog()
     X_train, y_train = load_pickle(os.path.join(data_path, "train.pkl"))

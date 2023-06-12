@@ -1,19 +1,20 @@
 import pathlib
 import pickle
-import pandas as pd
+
+import mlflow
 import numpy as np
+import pandas as pd
 import scipy
 import sklearn
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.metrics import mean_squared_error
-import mlflow
 import xgboost as xgb
 from prefect import flow, task
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.metrics import mean_squared_error
 
 
-@task(retries=3, retry_delay_seconds=2)
+@task(name="Read taxi data", retries=3, retry_delay_seconds=2)
 def read_data(filename: str) -> pd.DataFrame:
-    """Read data into DataFrame"""
+    """Read data into DataFrame."""
     df = pd.read_parquet(filename)
 
     df.lpep_dropoff_datetime = pd.to_datetime(df.lpep_dropoff_datetime)
@@ -30,19 +31,17 @@ def read_data(filename: str) -> pd.DataFrame:
     return df
 
 
-@task
+@task(name="Build taxi features")
 def add_features(
     df_train: pd.DataFrame, df_val: pd.DataFrame
-) -> tuple(
-    [
-        scipy.sparse._csr.csr_matrix,
-        scipy.sparse._csr.csr_matrix,
-        np.ndarray,
-        np.ndarray,
-        sklearn.feature_extraction.DictVectorizer,
-    ]
-):
-    """Add features to the model"""
+) -> tuple[
+    scipy.sparse._csr.csr_matrix,
+    scipy.sparse._csr.csr_matrix,
+    np.ndarray,
+    np.ndarray,
+    sklearn.feature_extraction.DictVectorizer,
+]:
+    """Add features to the model."""
     df_train["PU_DO"] = df_train["PULocationID"] + "_" + df_train["DOLocationID"]
     df_val["PU_DO"] = df_val["PULocationID"] + "_" + df_val["DOLocationID"]
 
@@ -62,7 +61,7 @@ def add_features(
     return X_train, X_val, y_train, y_val, dv
 
 
-@task(log_prints=True)
+@task(name="Train taxi model", log_prints=True)
 def train_best_model(
     X_train: scipy.sparse._csr.csr_matrix,
     X_val: scipy.sparse._csr.csr_matrix,
@@ -70,7 +69,7 @@ def train_best_model(
     y_val: np.ndarray,
     dv: sklearn.feature_extraction.DictVectorizer,
 ) -> None:
-    """train a model with best hyperparams and write everything out"""
+    """train a model with best hyperparams and write everything out."""
 
     with mlflow.start_run():
         train = xgb.DMatrix(X_train, label=y_train)
@@ -109,12 +108,12 @@ def train_best_model(
     return None
 
 
-@flow
+@flow(name="NYC Taxi duration prediction")
 def main_flow(
     train_path: str = "./data/green_tripdata_2021-01.parquet",
     val_path: str = "./data/green_tripdata_2021-02.parquet",
 ) -> None:
-    """The main training pipeline"""
+    """The main training pipeline."""
 
     # MLflow settings
     mlflow.set_tracking_uri("sqlite:///mlflow.db")

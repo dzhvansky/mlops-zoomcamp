@@ -42,19 +42,11 @@ def train_and_log_model(data_path, params):
 
 
 @click.command()
+@click.option("--data_path", default="./output", help="Location where the processed NYC taxi trip data was saved")
 @click.option(
-    "--data_path",
-    default="./output",
-    help="Location where the processed NYC taxi trip data was saved"
-)
-@click.option(
-    "--top_n",
-    default=5,
-    type=int,
-    help="Number of top models that need to be evaluated to decide which one to promote"
+    "--top_n", default=5, type=int, help="Number of top models that need to be evaluated to decide which one to promote"
 )
 def run_register_model(data_path: str, top_n: int):
-
     client = MlflowClient()
 
     # Retrieve the top_n model runs and log the models
@@ -63,7 +55,7 @@ def run_register_model(data_path: str, top_n: int):
         experiment_ids=experiment.experiment_id,
         run_view_type=ViewType.ACTIVE_ONLY,
         max_results=top_n,
-        order_by=["metrics.rmse ASC"]
+        order_by=["metrics.rmse ASC"],
     )
     for run in runs:
         train_and_log_model(data_path=data_path, params=run.data.params)
@@ -74,7 +66,7 @@ def run_register_model(data_path: str, top_n: int):
         experiment_ids=experiment.experiment_id,
         run_view_type=ViewType.ACTIVE_ONLY,
         max_results=top_n,
-        order_by=["metrics.test_rmse ASC"]
+        order_by=["metrics.test_rmse ASC"],
     )[0]
 
     # Register the best model

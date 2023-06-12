@@ -7,10 +7,12 @@ authors = ["Dmitry Zhvansky <placeholder@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.10"
 scikit-learn = "*"
+xgboost = "*"
 pandas = "*"
 numpy = "*"
 mlflow = "*"
 optuna = "*"
+prefect = "*"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "*"
