@@ -1,6 +1,8 @@
 import datetime
+import os
 import pathlib
 import pickle
+import typing
 
 import mlflow
 import numpy as np
@@ -8,10 +10,31 @@ import pandas as pd
 import scipy
 import sklearn
 import xgboost as xgb
+from create_email_block import EMAIL_CREDS_NAME
 from prefect import flow, task
 from prefect.artifacts import create_markdown_artifact
+from prefect.context import get_run_context
+from prefect_email import EmailServerCredentials, email_send_message
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import mean_squared_error
+
+
+NOTIFICATION_ADDRESS_VAR: typing.Final[str] = "NOTIFICATION_ADDRESS"
+NOTIFICATION_LIST: typing.Final[list[str]] = [os.getenv(NOTIFICATION_ADDRESS_VAR, default="test@mail.com")]
+
+
+def notify_exc_by_email(exc, notification_list: list[str]) -> None:
+    context = get_run_context()
+    flow_run_name = context.flow_run.name
+    email_server_credentials = EmailServerCredentials.load(EMAIL_CREDS_NAME)
+
+    for email_address in notification_list:
+        email_send_message.with_options(name=f"email {email_address}")(
+            email_server_credentials=email_server_credentials,
+            subject=f"Flow run {flow_run_name!r} failed",
+            msg=f"Flow run {flow_run_name!r} failed due to {exc}.",
+            email_to=email_address,
+        )
 
 
 @task(name="Read taxi data", retries=3, retry_delay_seconds=2)
@@ -130,22 +153,28 @@ def train_best_model(
 def main_flow(
     train_path: str = "./data/green_tripdata_2021-01.parquet",
     val_path: str = "./data/green_tripdata_2021-02.parquet",
+    notification_list: typing.Optional[list[str]] = None,
 ) -> None:
     """The main training pipeline."""
+    try:
+        # MLflow settings
+        mlflow.set_tracking_uri("sqlite:///mlflow.db")
+        mlflow.set_experiment("nyc-taxi-experiment")
 
-    # MLflow settings
-    mlflow.set_tracking_uri("sqlite:///mlflow.db")
-    mlflow.set_experiment("nyc-taxi-experiment")
+        # Load
+        df_train = read_data(train_path)
+        df_val = read_data(val_path)
 
-    # Load
-    df_train = read_data(train_path)
-    df_val = read_data(val_path)
+        # Transform
+        X_train, X_val, y_train, y_val, dv = add_features(df_train, df_val)
 
-    # Transform
-    X_train, X_val, y_train, y_val, dv = add_features(df_train, df_val)
+        # Train
+        train_best_model(X_train, X_val, y_train, y_val, dv)
 
-    # Train
-    train_best_model(X_train, X_val, y_train, y_val, dv)
+    except Exception as exc:
+        if notification_list is not None:
+            notify_exc_by_email(exc, notification_list=notification_list)
+        raise
 
 
 if __name__ == "__main__":

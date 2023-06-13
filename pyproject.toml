@@ -13,6 +13,7 @@ numpy = "*"
 mlflow = "*"
 optuna = "*"
 prefect = "*"
+prefect-email = "*"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "*"
