@@ -1,3 +1,4 @@
+import datetime
 import pathlib
 import pickle
 
@@ -8,6 +9,7 @@ import scipy
 import sklearn
 import xgboost as xgb
 from prefect import flow, task
+from prefect.artifacts import create_markdown_artifact
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import mean_squared_error
 
@@ -105,6 +107,22 @@ def train_best_model(
         mlflow.log_artifact("models/preprocessor.b", artifact_path="preprocessor")
 
         mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
+
+        markdown_rmse_report = f"""# RMSE Report
+
+                ## Summary
+
+                Duration Prediction 
+
+                ## RMSE XGBoost Model
+
+                | Region    | RMSE |
+                |:----------|-------:|
+                | {datetime.date.today()} | {rmse:.2f} |
+                """
+
+        create_markdown_artifact(key="duration-model-report", markdown=markdown_rmse_report)
+
     return None
 
 
