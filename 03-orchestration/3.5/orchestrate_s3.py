@@ -1,22 +1,23 @@
 import pathlib
 import pickle
-import pandas as pd
+from datetime import date
+
+import mlflow
 import numpy as np
+import pandas as pd
 import scipy
 import sklearn
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.metrics import mean_squared_error
-import mlflow
 import xgboost as xgb
 from prefect import flow, task
-from prefect_aws import S3Bucket
 from prefect.artifacts import create_markdown_artifact
-from datetime import date
+from prefect_aws import S3Bucket
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.metrics import mean_squared_error
 
 
 @task(retries=3, retry_delay_seconds=2)
 def read_data(filename: str) -> pd.DataFrame:
-    """Read data into DataFrame"""
+    """Read data into DataFrame."""
     df = pd.read_parquet(filename)
 
     df.lpep_dropoff_datetime = pd.to_datetime(df.lpep_dropoff_datetime)
@@ -45,7 +46,7 @@ def add_features(
         sklearn.feature_extraction.DictVectorizer,
     ]
 ):
-    """Add features to the model"""
+    """Add features to the model."""
     df_train["PU_DO"] = df_train["PULocationID"] + "_" + df_train["DOLocationID"]
     df_val["PU_DO"] = df_val["PULocationID"] + "_" + df_val["DOLocationID"]
 
@@ -73,7 +74,7 @@ def train_best_model(
     y_val: np.ndarray,
     dv: sklearn.feature_extraction.DictVectorizer,
 ) -> None:
-    """train a model with best hyperparams and write everything out"""
+    """train a model with best hyperparams and write everything out."""
 
     with mlflow.start_run():
         train = xgb.DMatrix(X_train, label=y_train)
@@ -123,9 +124,7 @@ Duration Prediction
 | {date.today()} | {rmse:.2f} |
 """
 
-        create_markdown_artifact(
-            key="duration-model-report", markdown=markdown__rmse_report
-        )
+        create_markdown_artifact(key="duration-model-report", markdown=markdown__rmse_report)
 
     return None
 
@@ -135,7 +134,7 @@ def main_flow_s3(
     train_path: str = "./data/green_tripdata_2021-01.parquet",
     val_path: str = "./data/green_tripdata_2021-02.parquet",
 ) -> None:
-    """The main training pipeline"""
+    """The main training pipeline."""
 
     # MLflow settings
     mlflow.set_tracking_uri("sqlite:///mlflow.db")
