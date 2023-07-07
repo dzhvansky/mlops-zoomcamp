@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import sys
 import os
 import pickle
+import sys
+
 import pandas as pd
 
 
-year = int(sys.argv[1]) # 2022
-month = int(sys.argv[2]) # 2
+year = int(sys.argv[1])  # 2022
+month = int(sys.argv[2])  # 2
 
 input_file = f'https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{year:04d}-{month:02d}.parquet'
 output_file = f'output/yellow_tripdata_{year:04d}-{month:02d}.parquet'
@@ -20,16 +21,17 @@ with open('model.bin', 'rb') as f_in:
 
 categorical = ['PULocationID', 'DOLocationID']
 
+
 def read_data(filename):
     df = pd.read_parquet(filename)
-    
+
     df['duration'] = df.tpep_dropoff_datetime - df.tpep_pickup_datetime
     df['duration'] = df.duration.dt.total_seconds() / 60
 
     df = df[(df.duration >= 1) & (df.duration <= 60)].copy()
 
     df[categorical] = df[categorical].fillna(-1).astype('int').astype('str')
-    
+
     return df
 
 
@@ -51,9 +53,4 @@ df_result['predicted_duration'] = y_pred
 
 
 os.makedirs('output', exist_ok=True)
-df_result.to_parquet(
-    output_file,
-    engine='pyarrow',
-    compression=None,
-    index=False
-)
+df_result.to_parquet(output_file, engine='pyarrow', compression=None, index=False)
